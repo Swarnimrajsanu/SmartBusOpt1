@@ -81,33 +81,33 @@ def parse_tripinfo(path, bus_type="bus"):
         for _, veh in ET.iterparse(f, events=("end",)):
             if veh.tag != "tripinfo":
                 continue
-        try:
-            dur = float(veh.get("duration", "0"))       # seconds
-            tl = float(veh.get("timeLoss", "0"))          # seconds
-            wait = float(veh.get("waitingTime", "0"))     # seconds
-            stop_t = float(veh.get("stopTime", "0"))      # seconds
-            rl = float(veh.get("routeLength", "0"))       # meters
-            vtype = veh.get("vType", "")
-        except (TypeError, ValueError):
-            veh.clear()
-            continue
-        agg["completed"] += 1
-        agg["sumDuration"] += dur
-        agg["sumTimeLoss"] += tl
-        agg["sumWaiting"] += wait
-        agg["sumRouteLen"] += rl
-        if rl > 0 and dur > 0:
-            speeds.append(rl / dur)
-        is_bus = (vtype == bus_type)
-        if is_bus:
-            agg["busCompleted"] += 1
-            agg["busSumDuration"] += dur
-            agg["busSumTimeLoss"] += tl
-            agg["busSumWaiting"] += wait + stop_t
-            agg["busSumRouteLen"] += rl
+            try:
+                dur = float(veh.get("duration", "0"))       # seconds
+                tl = float(veh.get("timeLoss", "0"))          # seconds
+                wait = float(veh.get("waitingTime", "0"))     # seconds
+                stop_t = float(veh.get("stopTime", "0"))      # seconds
+                rl = float(veh.get("routeLength", "0"))       # meters
+                vtype = veh.get("vType", "")
+            except (TypeError, ValueError):
+                veh.clear()
+                continue
+            agg["completed"] += 1
+            agg["sumDuration"] += dur
+            agg["sumTimeLoss"] += tl
+            agg["sumWaiting"] += wait
+            agg["sumRouteLen"] += rl
             if rl > 0 and dur > 0:
-                bus_speeds.append(rl / dur)
-        veh.clear()
+                speeds.append(rl / dur)
+            is_bus = (vtype == bus_type)
+            if is_bus:
+                agg["busCompleted"] += 1
+                agg["busSumDuration"] += dur
+                agg["busSumTimeLoss"] += tl
+                agg["busSumWaiting"] += wait + stop_t
+                agg["busSumRouteLen"] += rl
+                if rl > 0 and dur > 0:
+                    bus_speeds.append(rl / dur)
+            veh.clear()
 
     def mean(xs):
         return round(sum(xs) / len(xs), 3) if xs else None
