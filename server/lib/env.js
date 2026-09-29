@@ -29,8 +29,11 @@ function version(binPath, args = ["--version"]) {
 function candidateBinDirs() {
   const dirs = [];
   if (process.env.SUMO_HOME) dirs.push(path.join(process.env.SUMO_HOME, "bin"));
-  dirs.push(path.join(os.homedir(), "Applications", "Sumo", "bin")); // our no-sudo install
-  dirs.push("/Applications/Sumo/bin"); // official .pkg system install
+  dirs.push(path.join(os.homedir(), "Applications", "Sumo", "bin")); // macOS no-sudo install
+  dirs.push("/Applications/Sumo/bin");  // macOS official .pkg install
+  dirs.push("/usr/bin");                 // Linux apt-get install sumo (Ubuntu/Debian/Render)
+  dirs.push("/usr/local/bin");           // Linux local install
+  dirs.push("/opt/homebrew/bin");        // Homebrew on Apple Silicon
   return dirs;
 }
 
@@ -50,6 +53,9 @@ function resolveSumoHome(sumoBin) {
   if (process.env.SUMO_HOME) return process.env.SUMO_HOME;
   if (!sumoBin) return null;
   const root = path.resolve(path.dirname(sumoBin), ".."); // .../Sumo
+  // Linux apt install: sumo is at /usr/bin/sumo, tools are at /usr/share/sumo/tools
+  const linuxShare = "/usr/share/sumo";
+  if (fs.existsSync(linuxShare)) return linuxShare;
   const share = path.join(root, "share", "sumo");
   return fs.existsSync(share) ? share : root;
 }
@@ -57,11 +63,19 @@ function resolveSumoHome(sumoBin) {
 // Pick a Python whose XML parser works. This machine's Homebrew Python 3.14 has a broken
 // pyexpat/xml.sax, which SUMO's tools (randomTrips.py, traci, sumolib) require. macOS
 // system Python 3.9 (/usr/bin/python3) works, so prefer it for the TraCI bridge.
+// On Linux (Render/Ubuntu), python3 from apt is fully functional.
 function resolveTraciPython() {
-  const candidates = [process.env.SUMO_PYTHON, "/usr/bin/python3", which("python3")].filter(
-    Boolean
-  );
-  for (const py of candidates) {
+  const candidates = [
+    process.env.SUMO_PYTHON,
+    "/usr/bin/python3",   // macOS system + Ubuntu apt python3
+    which("python3"),
+    which("python"),
+    "/usr/local/bin/python3",
+  ].filter(Boolean);
+  // dedupe while preserving order
+  const seen = new Set();
+  const unique = candidates.filter((p) => { if (seen.has(p)) return false; seen.add(p); return true; });
+  for (const py of unique) {
     try {
       execFileSync(
         py,
@@ -73,7 +87,7 @@ function resolveTraciPython() {
       // try next candidate
     }
   }
-  return { path: candidates[0] || null, xmlOk: false };
+  return { path: unique[0] || null, xmlOk: false };
 }
 
 export function detectSumo() {

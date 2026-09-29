@@ -332,7 +332,7 @@
         "Install SUMO — see docs/SUMO_SETUP.md.");
       return;
     }
-    if (state.es) { try { state.es.close(); } catch (e) {} }
+    if (state.es) { try { state.es.close(); } catch (e) { } }
 
     buildStepper();
     $("telemetry-card").hidden = false;
@@ -370,7 +370,7 @@
     es.addEventListener("error", (ev) => {
       // SSE 'error' fires both for our custom event and for connection close.
       let d = null;
-      try { d = ev.data ? JSON.parse(ev.data) : null; } catch (e) {}
+      try { d = ev.data ? JSON.parse(ev.data) : null; } catch (e) { }
       if (d && d.message) {
         const items = [...document.querySelectorAll("#stepper li.active")];
         if (items[0]) { items[0].classList.add("error"); items[0].querySelector(".step-dot").textContent = "!"; }
@@ -385,13 +385,13 @@
   }
 
   function stopRun() {
-    if (state.es) { try { state.es.close(); } catch (e) {} state.es = null; }
+    if (state.es) { try { state.es.close(); } catch (e) { } state.es = null; }
     finishRun();
     showResultsError("Simulation stopped by user before completion. No result was fabricated.");
   }
 
   function finishRun() {
-    if (state.es) { try { state.es.close(); } catch (e) {} state.es = null; }
+    if (state.es) { try { state.es.close(); } catch (e) { } state.es = null; }
     setRunButton(false);
   }
 

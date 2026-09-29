@@ -35,17 +35,32 @@ export function sumoChildEnv() {
   const sumoBin = bin.sumo;
   let sumoRoot = null;
   if (sumoBin) sumoRoot = path.resolve(path.dirname(sumoBin), ".."); // .../Sumo
+
   const sumoHome = sumo.sumoHome || (sumoRoot ? path.join(sumoRoot, "share", "sumo") : null);
 
   if (sumoHome) {
     env.SUMO_HOME = sumoHome;
-    env.PYTHONPATH = [path.join(sumoHome, "tools"), env.PYTHONPATH].filter(Boolean).join(path.delimiter);
+    // On Linux apt install, sumoHome IS /usr/share/sumo (tools live at sumoHome/tools).
+    // On macOS, tools live at sumoHome/tools too, but sumoHome may be the share/sumo dir.
+    const toolsDir = path.join(sumoHome, "tools");
+    const pythonPathParts = [toolsDir];
+    // Also include dist-packages for system traci/sumolib installed via apt python3-sumo
+    if (process.platform === "linux") {
+      pythonPathParts.push("/usr/lib/python3/dist-packages");
+    }
+    if (env.PYTHONPATH) pythonPathParts.push(env.PYTHONPATH);
+    env.PYTHONPATH = pythonPathParts.filter(Boolean).join(path.delimiter);
   }
-  const projDir = resolveProjDir(sumoRoot);
-  if (projDir) {
-    env.PROJ_DATA = projDir;
-    env.PROJ_LIB = projDir;
+
+  // proj.db: only needed on macOS framework layout — on Linux, libproj handles it natively.
+  if (process.platform !== "linux") {
+    const projDir = resolveProjDir(sumoRoot);
+    if (projDir) {
+      env.PROJ_DATA = projDir;
+      env.PROJ_LIB = projDir;
+    }
   }
+
   if (sumoBin) env.SUMO_BIN = sumoBin;
 
   return {
@@ -54,7 +69,7 @@ export function sumoChildEnv() {
     pythonXmlOk: bin.traciPythonXmlOk,
     sumoBin,
     sumoHome,
-    projDir,
+    projDir: null,
     available: sumo.available,
     mode: sumo.mode,
   };
