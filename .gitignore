@@ -1,0 +1,19 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Generated SUMO / OSM artifacts (build prompt §5.1 — never commit large binaries)
+simulation/osm/*
+simulation/network/*
+simulation/routes/*
+simulation/scenarios/*
+simulation/output/*
+!simulation/**/.gitkeep
+
+# Generated dataset artifacts (derived from the source xlsx; rebuild with `npm run load-data`)
+server/data/*.generated.json
+
+# OS / editor
+.DS_Store
+*.log
+.env

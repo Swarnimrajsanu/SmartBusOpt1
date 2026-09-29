@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartBusOpt — Bengaluru Bus Stop Optimization</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">SB</div>
+      <div class="brand-text">
+        <h1>SmartBusOpt</h1>
+        <p>AI-driven, network-aware bus-stop optimization · Chikkabanavara, Bengaluru</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div id="mode-banner" class="mode-banner mode-unknown">
+        <span class="dot"></span><span id="mode-label">detecting…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: stop list -->
+    <aside class="panel panel-left">
+      <div class="panel-head">
+        <h2>Bus Stops</h2>
+        <span class="badge" id="stop-count">–</span>
+      </div>
+      <div class="panel-sub">Click a stop to inspect it and run a real SUMO comparison.</div>
+      <ul class="stop-list" id="stop-list"></ul>
+      <div class="legend">
+        <div class="legend-title">Map legend</div>
+        <div class="legend-row"><span class="swatch swatch-existing"></span> Existing stop</div>
+        <div class="legend-row"><span class="swatch swatch-selected"></span> Selected stop</div>
+        <div class="legend-row"><span class="swatch swatch-recommended"></span> Recommended (AI + SUMO)</div>
+        <div class="legend-row"><span class="swatch swatch-bus"></span> Live bus (SUMO/TraCI)</div>
+        <div class="legend-row"><span class="swatch swatch-veh"></span> Live traffic (SUMO/TraCI)</div>
+        <div class="legend-row"><span class="line-swatch"></span> Bus corridor (OSM-derived)</div>
+      </div>
+    </aside>
+
+    <!-- CENTER: map -->
+    <section class="map-wrap">
+      <div id="map"></div>
+      <div class="map-overlay-tl" id="sim-clock">
+        <span class="sim-label">SUMO sim time</span>
+        <span class="sim-time" id="sim-time">—</span>
+      </div>
+      <div class="map-overlay-bl provenance-note">
+        Vehicle positions are streamed live from SUMO/TraCI and projected to lon/lat —
+        never animated independently of the simulation (§11).
+      </div>
+    </section>
+
+    <!-- RIGHT: workspace -->
+    <aside class="panel panel-right">
+      <div class="panel-head">
+        <h2>Simulation Workspace</h2>
+      </div>
+
+      <!-- Stop detail -->
+      <div class="card" id="stop-detail">
+        <div class="empty-state">
+          <div class="empty-icon">◎</div>
+          <p>Select a bus stop on the map or from the list to begin.</p>
+        </div>
+      </div>
+
+      <!-- Run control -->
+      <div class="card run-card" id="run-card" hidden>
+        <button class="btn-run" id="btn-run">
+          <span class="btn-run-icon">▶</span> Run Simulation
+        </button>
+        <div class="run-hint" id="run-hint">
+          Runs a real SUMO microsimulation: current stop vs. AI-relocated candidate,
+          identical network / demand / seed.
+        </div>
+      </div>
+
+      <!-- Progress stepper -->
+      <div class="card" id="stepper-card" hidden>
+        <div class="card-title">Progress</div>
+        <ol class="stepper" id="stepper"></ol>
+      </div>
+
+      <!-- Live telemetry -->
+      <div class="card" id="telemetry-card" hidden>
+        <div class="card-title">
+          Live telemetry
+          <span class="prov-tag prov-sumo">SUMO-measured</span>
+        </div>
+        <div class="telemetry-grid" id="telemetry"></div>
+      </div>
+
+      <!-- Results -->
+      <div class="card" id="results-card" hidden>
+        <div class="card-title">Current vs. Alternative</div>
+        <div id="results"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span>Every number is traceable: <b>observed</b> · <b>estimated</b> · <b>synthetic</b> ·
+      <b>OSM-derived</b> · <b>SUMO-generated</b> · <b>model prediction</b>. ML scores suitability;
+      SUMO validates — the model never declares the "best" stop (§11).</span>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "smartbusopt",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-driven, network-aware bus stop location optimization for Bengaluru (GIS + ML + optimization + SUMO). Prototype.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "load-data": "node server/lib/buildDataset.js",
+    "quality": "node server/lib/qualityCli.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
