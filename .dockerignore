@@ -1,0 +1,6 @@
+.git
+.gitignore
+*.md
+docs/
+PROJECT_INSPECTION.md
+node_modules/
