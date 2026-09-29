@@ -77,9 +77,10 @@ def parse_tripinfo(path, bus_type="bus"):
         return None
     speeds = []
     bus_speeds = []
-    for _, veh in ET.iterparse(path, events=("end",)):
-        if veh.tag != "tripinfo":
-            continue
+    with open(path, "rb") as f:
+        for _, veh in ET.iterparse(f, events=("end",)):
+            if veh.tag != "tripinfo":
+                continue
         try:
             dur = float(veh.get("duration", "0"))       # seconds
             tl = float(veh.get("timeLoss", "0"))          # seconds

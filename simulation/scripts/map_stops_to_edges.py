@@ -107,7 +107,8 @@ def main():
     if not os.path.exists(NET):
         sys.stderr.write(f"ERROR: network not found: {NET}\n")
         sys.exit(2)
-    net = sumolib.net.readNet(NET)
+    with open(NET, "rb") as f:
+        net = sumolib.net.readNet(f)
 
     edges = net.getEdges()
     nodes = net.getNodes()

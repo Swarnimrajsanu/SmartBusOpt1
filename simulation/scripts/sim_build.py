@@ -47,7 +47,8 @@ except ImportError:
 
 
 def load():
-    net = sumolib.net.readNet(NET)
+    with open(NET, "rb") as f:
+        net = sumolib.net.readNet(f)
     mapping = json.load(open(STOP_EDGES))
     stops = sorted(mapping["stops"], key=lambda s: s["sequence"])
     return net, mapping, stops
