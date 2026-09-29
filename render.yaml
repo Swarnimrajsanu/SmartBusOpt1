@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: smartbusopt
+    runtime: node
+    plan: free
+    buildCommand: npm install && mkdir -p server/data
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: PORT
+        value: 10000
+      - key: SMARTBUSOPT_XLSX
+        value: /opt/render/project/src/data/bus_data.xlsx
+    healthCheckPath: /api/health

@@ -11,7 +11,9 @@ simulation/output/*
 !simulation/**/.gitkeep
 
 # Generated dataset artifacts (derived from the source xlsx; rebuild with `npm run load-data`)
-server/data/*.generated.json
+# Note: stops.normalized.generated.json IS committed so Render/cloud deploys work without the xlsx.
+# runs.generated.json is ephemeral simulation output — excluded.
+server/data/runs.generated.json
 
 # OS / editor
 .DS_Store
