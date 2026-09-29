@@ -1,8 +1,8 @@
 # ============================================================
 # SmartBusOpt — Dockerfile
 #
-# Architecture:
-#   Render
+# Architecture (Railway / Render / Docker):
+#   Container
 #     ├── Node.js API (server/index.js)  → serves /public + /api/*
 #     ├── Python TraCI bridge            → spawned per-simulation
 #     └── SUMO headless (sumo binary)    → controlled via TraCI

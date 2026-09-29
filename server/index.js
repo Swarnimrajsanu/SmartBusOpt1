@@ -231,9 +231,9 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(SERVER_PORT, () => {
+server.listen(SERVER_PORT, "0.0.0.0", () => {
   const env = detectEnvironment();
-  console.log(`SmartBusOpt API listening on http://localhost:${SERVER_PORT}`);
+  console.log(`SmartBusOpt API listening on http://0.0.0.0:${SERVER_PORT}`);
   console.log(`  mode: ${env.sumo.mode} (SUMO available: ${env.sumo.available})`);
   if (!env.sumo.available) {
     console.log("  SUMO not detected -> DEMO_MODE. Real simulation disabled; see docs/SUMO_SETUP.md");
