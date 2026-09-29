@@ -38,6 +38,18 @@ SIM_DURATION = 1500  # long enough for a bus to traverse the ~13km corridor + dw
 CAND_SEARCH_M = 320.0  # window to look for a relocation candidate
 MIN_SPACING_M = 140.0  # keep candidates this far from neighbouring stops
 
+import pathlib
+import xml.sax
+
+# Python 3.10 xml.sax URL handling workaround:
+# Convert raw file path strings to file:// URIs so urllib.request.urlopen parses them safely
+_orig_sax_parse = xml.sax.parse
+def _safe_sax_parse(source, handler, errorHandler=xml.sax.handler.ErrorHandler()):
+    if isinstance(source, str) and not (source.startswith("file://") or source.startswith("http://") or source.startswith("https://")):
+        source = pathlib.Path(os.path.abspath(source)).as_uri()
+    return _orig_sax_parse(source, handler, errorHandler)
+xml.sax.parse = _safe_sax_parse
+
 try:
     import sumolib
     import sumolib.geomhelper as gh
@@ -47,8 +59,7 @@ except ImportError:
 
 
 def load():
-    with open(NET, "rb") as f:
-        net = sumolib.net.readNet(f)
+    net = sumolib.net.readNet(NET)
     mapping = json.load(open(STOP_EDGES))
     stops = sorted(mapping["stops"], key=lambda s: s["sequence"])
     return net, mapping, stops

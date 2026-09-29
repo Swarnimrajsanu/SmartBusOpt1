@@ -27,6 +27,18 @@ OUT = os.path.join(ROOT, "simulation", "config", "stop_edges.json")
 MAX_WALK_M = 120.0  # reject stops farther than this from any road edge (§5.3)
 GRID = 150.0  # spatial index cell size (m)
 
+import pathlib
+import xml.sax
+
+# Python 3.10 xml.sax URL handling workaround:
+# Convert raw file path strings to file:// URIs so urllib.request.urlopen parses them safely
+_orig_sax_parse = xml.sax.parse
+def _safe_sax_parse(source, handler, errorHandler=xml.sax.handler.ErrorHandler()):
+    if isinstance(source, str) and not (source.startswith("file://") or source.startswith("http://") or source.startswith("https://")):
+        source = pathlib.Path(os.path.abspath(source)).as_uri()
+    return _orig_sax_parse(source, handler, errorHandler)
+xml.sax.parse = _safe_sax_parse
+
 try:
     import sumolib
     import sumolib.geomhelper as gh
@@ -107,8 +119,7 @@ def main():
     if not os.path.exists(NET):
         sys.stderr.write(f"ERROR: network not found: {NET}\n")
         sys.exit(2)
-    with open(NET, "rb") as f:
-        net = sumolib.net.readNet(f)
+    net = sumolib.net.readNet(NET)
 
     edges = net.getEdges()
     nodes = net.getNodes()
