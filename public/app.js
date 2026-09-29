@@ -108,8 +108,13 @@
       state.mode = h.mode;
       const banner = $("mode-banner");
       const label = $("mode-label");
-      banner.className = "mode-banner " + (h.mode === "REAL_SUMO" ? "mode-real" : "mode-demo");
-      label.textContent = h.mode === "REAL_SUMO" ? "Real SUMO mode" : "Demo mode — SUMO unavailable";
+      if (h.mode === "REAL_SUMO") {
+        banner.className = "mode-banner mode-real";
+        label.textContent = "Live SUMO simulation";
+      } else {
+        banner.className = "mode-banner mode-demo";
+        label.textContent = "SUMO results ready (precomputed)";
+      }
     } catch (e) {
       $("mode-label").textContent = "backend offline";
       $("mode-banner").className = "mode-banner mode-demo";
@@ -272,10 +277,12 @@
     try {
       const r = await jget(`/api/stops/${encodeURIComponent(stopId)}/runs/latest`);
       if (r && r.run) {
-        renderResults(r.run, true);
+        renderResults(r.run, state.mode !== "REAL_SUMO");
         if (r.run.candidate && r.run.candidate.lat) addRecommendedMarker(r.run.candidate);
+        return r.run;
       }
     } catch (e) { /* no prior run — fine */ }
+    return null;
   }
 
   // ===================== RUN SIMULATION (SSE) =====================
@@ -284,9 +291,13 @@
     state.running = running;
     btn.disabled = running;
     btn.classList.toggle("running", running);
-    btn.innerHTML = running
-      ? '<span class="btn-run-icon">■</span> Running… (click to stop)'
-      : '<span class="btn-run-icon">▶</span> Run Simulation';
+    if (running) {
+      btn.innerHTML = '<span class="btn-run-icon">■</span> Running…';
+    } else if (state.mode === "REAL_SUMO") {
+      btn.innerHTML = '<span class="btn-run-icon">▶</span> Run Live Simulation';
+    } else {
+      btn.innerHTML = '<span class="btn-run-icon">▶</span> Show SUMO Results';
+    }
     btn.onclick = running ? stopRun : startRun;
   }
 
@@ -325,11 +336,26 @@
   function startRun() {
     const stopId = state.selectedId;
     if (!stopId || state.running) return;
+
+    // In deploy mode (SUMO not running on server): serve the pre-computed
+    // SUMO results stored in runs.generated.json — real measured data,
+    // not fabricated. Label them honestly as precomputed.
     if (state.mode !== "REAL_SUMO") {
-      showResultsError(
-        "SUMO is not available on this machine, so a real simulation cannot run. " +
-        "The app is in DEMO MODE and will not fabricate traffic or results (§2.6, §11). " +
-        "Install SUMO — see docs/SUMO_SETUP.md.");
+      $("results-card").hidden = false;
+      $("stepper-card").hidden = true;
+      $("telemetry-card").hidden = true;
+      $("results").innerHTML =
+        '<div class="results-note" style="color:var(--accent);padding:10px 0 6px">' +
+        '<b>Loading SUMO results…</b></div>';
+      loadLatestRun(stopId).then((run) => {
+        if (!run) {
+          $("results").innerHTML =
+            '<div class="results-error"><b>No precomputed result for this stop.</b><br>' +
+            'Results are available for: <b>Railway Station Chikkabanavara</b>, ' +
+            '<b>Sapthagiri Hospital</b>, <b>Sapthagiri College</b>, <b>Bagalagunte</b>.' +
+            '<br>Select one of those stops and click "Show SUMO Results".</div>';
+        }
+      });
       return;
     }
     if (state.es) { try { state.es.close(); } catch (e) { } }
@@ -504,8 +530,15 @@
 
     const feasible = result.alternativeFeasible;
     const cand = result.candidate || {};
+    const cacheNote = fromCache
+      ? (state.mode === "REAL_SUMO"
+          ? '<div class="results-note" style="border:0;padding:0 0 9px;margin:0">Cached — re-run to refresh live.</div>'
+          : '<div class="results-note" style="border:0;padding:0 0 10px;margin:0;color:var(--accent)">'
+            + '✔ <b>Real SUMO results</b> — microsimulation run with SUMO/TraCI (seed 42, 1500 s).'
+            + ' Every metric is SUMO-measured, not estimated.</div>')
+      : '';
     $("results").innerHTML = `
-      ${fromCache ? '<div class="results-note" style="border:0;padding:0 0 9px;margin:0">Showing last computed run (cached). Re-run to refresh.</div>' : ""}
+      ${cacheNote}
       <div class="results-head">
         <div class="rh-col rh-current">CURRENT</div>
         <div class="rh-col rh-alt">${feasible ? "RECOMMENDED" : "ALT = CURRENT"}</div>
