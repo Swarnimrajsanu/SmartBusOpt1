@@ -2,11 +2,8 @@
 node_modules/
 npm-debug.log*
 
-# Generated SUMO / OSM artifacts (build prompt §5.1 — never commit large binaries)
+# Generated SUMO / OSM artifacts
 simulation/osm/*
-simulation/network/*
-simulation/routes/*
-simulation/scenarios/*
 simulation/output/*
 !simulation/**/.gitkeep
 

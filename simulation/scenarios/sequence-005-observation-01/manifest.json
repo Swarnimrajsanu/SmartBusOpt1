@@ -1,0 +1,39 @@
+{
+  "stopId": "sequence-005-observation-01",
+  "selected": {
+    "sequence": 5,
+    "stopId": "sequence-005-observation-01",
+    "name": "Sapthagiri Hospital",
+    "edgeId": "85605697#7",
+    "laneId": "85605697#7_0",
+    "position": 193.69,
+    "distanceToRoadM": 5.68,
+    "feasible": true,
+    "lat": 13.0709663,
+    "lon": 77.5040142
+  },
+  "candidate": {
+    "edgeId": "85605697#9",
+    "laneId": "85605697#9_0",
+    "position": 13.71,
+    "edgeLength": 27.42,
+    "junctionScore": 6.0,
+    "routeIndex": 22,
+    "shiftAlongCorridorM": 198.7,
+    "lon": 77.503926,
+    "lat": 13.070638
+  },
+  "candidateProvenance": "GIS rule-based relocation toward nearest major/signalized junction within 320m, min spacing 140m. Suitability proxy \u2014 NOT an ML verdict; validated by SUMO.",
+  "simDuration": 1500,
+  "busDwellSec": 20,
+  "busPeriodSec": 300,
+  "demand": {
+    "file": "routes/demand.rou.xml",
+    "provenance": "synthetic (randomTrips, seed 42)"
+  },
+  "network": {
+    "file": "network/bengaluru.net.xml",
+    "provenance": "OSM-derived (netconvert)"
+  },
+  "alternativeFeasible": true
+}

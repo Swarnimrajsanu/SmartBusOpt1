@@ -1,0 +1,39 @@
+{
+  "stopId": "sequence-003-observation-01",
+  "selected": {
+    "sequence": 3,
+    "stopId": "sequence-003-observation-01",
+    "name": "Railway Station Chikkabanavara",
+    "edgeId": "85605697#0",
+    "laneId": "85605697#0_0",
+    "position": 13.89,
+    "distanceToRoadM": 5.85,
+    "feasible": true,
+    "lat": 13.0752188,
+    "lon": 77.5046049
+  },
+  "candidate": {
+    "edgeId": "1090992209#2",
+    "laneId": "1090992209#2_0",
+    "position": 28.27,
+    "edgeLength": 56.54,
+    "junctionScore": 9.0,
+    "routeIndex": 11,
+    "shiftAlongCorridorM": -311.3,
+    "lon": 77.50269,
+    "lat": 13.077742
+  },
+  "candidateProvenance": "GIS rule-based relocation toward nearest major/signalized junction within 320m, min spacing 140m. Suitability proxy \u2014 NOT an ML verdict; validated by SUMO.",
+  "simDuration": 1500,
+  "busDwellSec": 20,
+  "busPeriodSec": 300,
+  "demand": {
+    "file": "routes/demand.rou.xml",
+    "provenance": "synthetic (randomTrips, seed 42)"
+  },
+  "network": {
+    "file": "network/bengaluru.net.xml",
+    "provenance": "OSM-derived (netconvert)"
+  },
+  "alternativeFeasible": true
+}

@@ -1,0 +1,39 @@
+{
+  "stopId": "sequence-009-observation-01",
+  "selected": {
+    "sequence": 9,
+    "stopId": "sequence-009-observation-01",
+    "name": "Bagalagunte",
+    "edgeId": "1418041721#6",
+    "laneId": "1418041721#6_0",
+    "position": 61.19,
+    "distanceToRoadM": 6.95,
+    "feasible": true,
+    "lat": 13.0578817,
+    "lon": 77.5072087
+  },
+  "candidate": {
+    "edgeId": "1418041721#7",
+    "laneId": "1418041721#7_0",
+    "position": 50.15,
+    "edgeLength": 100.29,
+    "junctionScore": 22.5,
+    "routeIndex": 58,
+    "shiftAlongCorridorM": 68.7,
+    "lon": 77.507196,
+    "lat": 13.057272
+  },
+  "candidateProvenance": "GIS rule-based relocation toward nearest major/signalized junction within 320m, min spacing 140m. Suitability proxy \u2014 NOT an ML verdict; validated by SUMO.",
+  "simDuration": 1500,
+  "busDwellSec": 20,
+  "busPeriodSec": 300,
+  "demand": {
+    "file": "routes/demand.rou.xml",
+    "provenance": "synthetic (randomTrips, seed 42)"
+  },
+  "network": {
+    "file": "network/bengaluru.net.xml",
+    "provenance": "OSM-derived (netconvert)"
+  },
+  "alternativeFeasible": true
+}

@@ -1,0 +1,13 @@
+<additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <busStop id="sb_01" lane="-75561410#5_0" startPos="14.43" endPos="34.43" name="Chikka Banavara"/>
+  <busStop id="sb_02" lane="-215040712#0_0" startPos="0.50" endPos="17.49" name="Chikkabanavara circle"/>
+  <busStop id="sb_03" lane="85605697#0_0" startPos="0.50" endPos="18.39" name="Railway Station Chikkabanavara"/>
+  <busStop id="sb_04" lane="85605697#5_0" startPos="0.00" endPos="12.22" name="Janapriya Apartment"/>
+  <busStop id="sb_05" lane="85605697#7_0" startPos="178.19" endPos="198.19" name="Sapthagiri Hospital"/>
+  <busStop id="sb_06" lane="85605697#12_0" startPos="34.84" endPos="54.84" name="Sapthagiri College (recommended)"/>
+  <busStop id="sb_07" lane="-1090992211#4_0" startPos="17.39" endPos="37.39" name="Bone Mill"/>
+  <busStop id="sb_08" lane="1263454560#1_0" startPos="20.17" endPos="40.17" name="Bagalagunte Bus Station"/>
+  <busStop id="sb_09" lane="1418041721#6_0" startPos="48.15" endPos="68.15" name="Bagalagunte"/>
+  <busStop id="sb_10" lane="1148196146#0_0" startPos="21.38" endPos="41.38" name="Widia School"/>
+  <busStop id="sb_11" lane="1148196146#11_0" startPos="0.00" endPos="14.44" name="8th Mile"/>
+</additional>
