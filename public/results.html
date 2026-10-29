@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results — SmartBusOpt</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body class="dash-body">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">SB</div>
+      <div class="brand-text">
+        <h1>SmartBusOpt</h1>
+        <p>Detailed simulation results · Chikkabanavara, Bengaluru</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <nav class="topnav">
+        <a class="topnav-link" href="/">Map</a>
+        <a class="topnav-link active" href="/results.html">Results</a>
+      </nav>
+      <div id="mode-banner" class="mode-banner mode-unknown">
+        <span class="dot"></span><span id="mode-label">detecting…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="dash">
+    <div class="dash-loading" id="dash-loading">
+      <div class="dash-spinner"></div>
+      <div>Loading results…</div>
+    </div>
+
+    <div class="results-error dash-fatal" id="dash-fatal" hidden></div>
+
+    <div id="dash-content" hidden>
+      <!-- ============ HERO ============ -->
+      <section class="hero">
+        <div class="hero-main">
+          <div class="hero-eyebrow" id="hero-eyebrow">SUMO-validated comparison</div>
+          <h2 class="hero-title" id="hero-title">—</h2>
+          <div class="hero-sub" id="hero-sub"></div>
+        </div>
+        <div class="hero-side">
+          <label class="picker-label" for="run-picker">Run</label>
+          <select id="run-picker" class="picker"></select>
+          <a class="btn-ghost" href="/">← Back to map</a>
+        </div>
+      </section>
+
+      <!-- ============ VERDICT ============ -->
+      <section class="verdict" id="verdict"></section>
+
+      <!-- ============ KPI TILES ============ -->
+      <section class="kpis" id="kpis"></section>
+
+      <!-- ============ SECTION NAV ============ -->
+      <nav class="dashnav" id="dashnav">
+        <a href="#sec-delta">Metric change</a>
+        <a href="#sec-relocation">Relocation</a>
+        <a href="#sec-cross">Cross-stop</a>
+        <a href="#sec-demand">Corridor demand</a>
+        <a href="#sec-suitability">Suitability</a>
+        <a href="#sec-table">Full table</a>
+        <a href="#sec-provenance">Provenance</a>
+      </nav>
+
+      <!-- ============ 1. DELTA + BUS BREAKDOWN ============ -->
+      <section class="dash-sec" id="sec-delta">
+        <div class="grid-2">
+          <div class="dcard">
+            <div class="dcard-head">
+              <h3>Metric-by-metric change</h3>
+              <span class="prov-tag prov-sumo">SUMO-measured</span>
+            </div>
+            <p class="dcard-sub">
+              Percentage change from <b class="c-cur">current</b> to
+              <b class="c-alt">recommended</b>. Bars point away from zero; colour shows whether the
+              change is an improvement for that metric, not merely its sign.
+            </p>
+            <div class="chart-box" id="chart-delta"></div>
+          </div>
+
+          <div class="dcard">
+            <div class="dcard-head">
+              <h3>Bus journey breakdown</h3>
+              <span class="prov-tag prov-sumo">SUMO-measured</span>
+            </div>
+            <p class="dcard-sub">
+              How the bus spends its route time. Free-flow is travel time minus delay; delay is
+              SUMO's <code>timeLoss</code>. Stop waiting is the dwell/halting component.
+            </p>
+            <div class="chart-box" id="chart-bus"></div>
+            <div class="chart-legend" id="legend-bus"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 2. RELOCATION MAP ============ -->
+      <section class="dash-sec" id="sec-relocation">
+        <div class="dcard">
+          <div class="dcard-head">
+            <h3>Where the stop moves</h3>
+            <span class="prov-tag prov-derived">GIS-derived · OSM network</span>
+          </div>
+          <p class="dcard-sub">
+            Real corridor geometry from the OSM-derived SUMO network. The dashed line is the
+            relocation itself — it is not a passenger path.
+          </p>
+          <div class="reloc-wrap">
+            <div id="mini-map"></div>
+            <div class="reloc-facts" id="reloc-facts"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 3. CROSS-STOP ============ -->
+      <section class="dash-sec" id="sec-cross">
+        <div class="dcard">
+          <div class="dcard-head">
+            <h3>Cross-stop comparison</h3>
+            <span class="prov-tag prov-sumo">SUMO-measured</span>
+          </div>
+          <p class="dcard-sub">
+            Latest run for every stop that has been simulated.
+            <span id="cross-count"></span>
+          </p>
+          <div class="metric-toggle" id="metric-toggle"></div>
+          <div class="chart-box chart-box-tall" id="chart-cross"></div>
+          <div class="chart-legend" id="legend-cross"></div>
+          <div class="caveat" id="cross-caveat"></div>
+        </div>
+      </section>
+
+      <!-- ============ 4. CORRIDOR DEMAND ============ -->
+      <section class="dash-sec" id="sec-demand">
+        <div class="dcard">
+          <div class="dcard-head">
+            <h3>Corridor demand profile</h3>
+            <span class="prov-tag prov-synthetic">synthetic</span>
+          </div>
+          <p class="dcard-sub">
+            All 11 unique stops in corridor order. These passenger figures come from the source
+            dataset and are <b>synthetic/estimated for modelling</b> — they are not counts. Only the
+            stop names and sequence are sourced.
+          </p>
+          <div class="chart-box chart-box-tall" id="chart-demand"></div>
+          <div class="chart-legend" id="legend-demand"></div>
+        </div>
+      </section>
+
+      <!-- ============ 5. SUITABILITY ============ -->
+      <section class="dash-sec" id="sec-suitability">
+        <div class="grid-2">
+          <div class="dcard">
+            <div class="dcard-head">
+              <h3>Stop suitability profile</h3>
+              <span class="prov-tag prov-synthetic">synthetic inputs</span>
+              <span class="prov-tag prov-derived">derived scale</span>
+            </div>
+            <p class="dcard-sub">
+              Each axis is min-max scaled across the 11 stops, so the shape is relative to this
+              corridor only. <b>Waiting time is inverted</b> — further out is better.
+            </p>
+            <div class="chart-box" id="chart-radar"></div>
+            <div class="stop-switch" id="stop-switch"></div>
+          </div>
+
+          <div class="dcard">
+            <div class="dcard-head">
+              <h3>Infrastructure &amp; land use</h3>
+              <span class="prov-tag prov-synthetic">synthetic</span>
+            </div>
+            <p class="dcard-sub">
+              Amenity presence at each stop, and the target label
+              (<code>Optimal_Stop</code>) as recorded in the dataset.
+            </p>
+            <div class="chart-box chart-box-tall" id="chart-amenities"></div>
+            <div class="chart-legend" id="legend-amenities"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 6. FULL TABLE ============ -->
+      <section class="dash-sec" id="sec-table">
+        <div class="dcard">
+          <div class="dcard-head">
+            <h3>Full metric table</h3>
+            <span class="prov-tag prov-sumo">SUMO-measured</span>
+            <span class="prov-tag prov-derived">GIS-derived</span>
+          </div>
+          <div class="table-wrap" id="metric-table"></div>
+        </div>
+      </section>
+
+      <!-- ============ 7. PROVENANCE ============ -->
+      <section class="dash-sec" id="sec-provenance">
+        <div class="grid-2">
+          <div class="dcard">
+            <div class="dcard-head">
+              <h3>Run provenance</h3>
+            </div>
+            <div class="prov-list" id="run-provenance"></div>
+          </div>
+          <div class="dcard">
+            <div class="dcard-head">
+              <h3>Dataset quality</h3>
+              <span class="prov-tag prov-sourced">sourced</span>
+            </div>
+            <div class="prov-list" id="dataset-quality"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span>Every number is traceable: <b>observed</b> · <b>estimated</b> · <b>synthetic</b> ·
+      <b>OSM-derived</b> · <b>SUMO-generated</b> · <b>model prediction</b>. ML scores suitability;
+      SUMO validates — the model never declares the "best" stop (§11).</span>
+  </footer>
+
+  <div class="chart-tip" id="chart-tip" hidden></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/results.js"></script>
+</body>
+
+</html>

@@ -25,6 +25,7 @@
     selectedId: null,
     es: null,             // active EventSource
     running: false,
+    redirectTimer: null,  // pending hand-off to /results.html
     vehicleLayer: null,
     stopLayer: null,
     recLayer: null,
@@ -392,6 +393,8 @@
       renderResults(d.result, false);
       if (d.result.candidate && d.result.candidate.lat) addRecommendedMarker(d.result.candidate);
       finishRun();
+      // The run is persisted server-side, so hand off to the detailed results page.
+      if (d.result.runId) openResults(d.result.runId, 1600);
     });
     es.addEventListener("error", (ev) => {
       // SSE 'error' fires both for our custom event and for connection close.
@@ -419,6 +422,34 @@
   function finishRun() {
     if (state.es) { try { state.es.close(); } catch (e) { } state.es = null; }
     setRunButton(false);
+  }
+
+  // Hand off to the detailed results page after a live run. The redirect is cancellable —
+  // the user just watched 25 minutes of simulated traffic and may want to stay on the map.
+  function openResults(runId, delayMs) {
+    const box = $("results");
+    if (!box) return;
+    const href = `/results.html?runId=${encodeURIComponent(runId)}`;
+
+    cancelResultsRedirect();
+    const note = document.createElement("div");
+    note.className = "redirect-note";
+    note.innerHTML =
+      `<span class="redirect-dot"></span>Opening detailed results…
+       <button class="redirect-cancel" type="button">Stay on map</button>`;
+    box.prepend(note);
+
+    state.redirectTimer = setTimeout(() => {
+      state.redirectTimer = null;
+      window.location.href = href;
+    }, delayMs);
+    note.querySelector(".redirect-cancel").addEventListener("click", cancelResultsRedirect);
+  }
+
+  // Re-rendering the results card (e.g. picking another stop) must not leave a redirect armed.
+  function cancelResultsRedirect() {
+    if (state.redirectTimer) { clearTimeout(state.redirectTimer); state.redirectTimer = null; }
+    document.querySelectorAll(".redirect-note").forEach((n) => n.remove());
   }
 
   function drawFrame(f) {
@@ -505,10 +536,11 @@
   }
 
   function renderResults(result, fromCache) {
+    cancelResultsRedirect();
     $("results-card").hidden = false;
     const cur = result.current || {};
     const alt = result.alternative || {};
-    const walk = result.walking || {};
+    const gis = result.gis || {};
 
     let rows = "";
     for (const r of RESULT_ROWS) {
@@ -520,12 +552,19 @@
           <div class="rv rv-alt">${fmt(av, r.unit)}${deltaBadge(cv, av, r.dir)}</div>
         </div>`;
     }
-    // walking distance (GIS-derived, not SUMO)
+    // GIS-derived, not SUMO. Two different quantities — deliberately separate rows,
+    // because neither one is a "walk to road" figure for the other arm.
+    const meters = (v) => (v != null ? `${v} m` : "—");
     rows += `
       <div class="result-row">
-        <div class="rk">Walk to road ${provTag("derived")}</div>
-        <div class="rv rv-current">${walk.currentWalkToRoadM != null ? walk.currentWalkToRoadM + " m" : "—"}</div>
-        <div class="rv rv-alt">${walk.alternativeWalkToRoadM != null ? walk.alternativeWalkToRoadM + " m" : "—"}</div>
+        <div class="rk" title="How far the surveyed stop coordinate sits from the SUMO lane it was snapped to. A network-fit measure — not a passenger walking distance.">Stop→lane offset ${provTag("derived")}</div>
+        <div class="rv rv-current">${meters(gis.currentSnapResidualM)}</div>
+        <div class="rv rv-alt">${meters(gis.recommendedSnapResidualM)}</div>
+      </div>
+      <div class="result-row">
+        <div class="rk" title="Straight-line distance the stop moves. Passengers who used the old site walk this much further. Not a distance from the road.">Walk added by move ${provTag("derived")}</div>
+        <div class="rv rv-current">—</div>
+        <div class="rv rv-alt">${meters(gis.relocationStraightLineM)}</div>
       </div>`;
 
     const feasible = result.alternativeFeasible;
@@ -534,8 +573,8 @@
       ? (state.mode === "REAL_SUMO"
           ? '<div class="results-note" style="border:0;padding:0 0 9px;margin:0">Cached — re-run to refresh live.</div>'
           : '<div class="results-note" style="border:0;padding:0 0 10px;margin:0;color:var(--accent)">'
-            + '✔ <b>Real SUMO results</b> — microsimulation run with SUMO/TraCI (seed 42, 1500 s).'
-            + ' Every metric is SUMO-measured, not estimated.</div>')
+            + `✔ <b>Real SUMO results</b> — microsimulation run with SUMO/TraCI (seed ${result.seed}, ${result.simDuration} s). `
+            + 'Traffic and bus metrics are SUMO-measured; the stop→lane and relocation figures are GIS-derived.</div>')
       : '';
     $("results").innerHTML = `
       ${cacheNote}
@@ -553,7 +592,11 @@
         run ${result.runId || "—"} · seed ${result.seed} · ${result.simDuration}s ·
         network: ${result.networkProvenance} · demand: ${result.demandProvenance}<br>
         ${result.completedAt || ""}
-      </div>`;
+      </div>
+      ${result.runId
+        ? `<a class="btn-details" href="/results.html?runId=${encodeURIComponent(result.runId)}">
+             Open detailed results <span class="btn-details-arrow">→</span></a>`
+        : ""}`;
   }
 
   function showResultsError(msg) {

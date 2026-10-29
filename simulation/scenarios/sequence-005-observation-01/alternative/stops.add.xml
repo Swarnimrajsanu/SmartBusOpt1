@@ -3,7 +3,7 @@
   <busStop id="sb_02" lane="-215040712#0_0" startPos="0.50" endPos="17.49" name="Chikkabanavara circle"/>
   <busStop id="sb_03" lane="85605697#0_0" startPos="0.50" endPos="18.39" name="Railway Station Chikkabanavara"/>
   <busStop id="sb_04" lane="85605697#5_0" startPos="0.00" endPos="12.22" name="Janapriya Apartment"/>
-  <busStop id="sb_05" lane="85605697#9_0" startPos="3.71" endPos="23.71" name="Sapthagiri Hospital (recommended)"/>
+  <busStop id="sb_05" lane="85605697#12_0" startPos="34.84" endPos="54.84" name="Sapthagiri Hospital (recommended)"/>
   <busStop id="sb_06" lane="85605697#13_0" startPos="204.65" endPos="224.65" name="Sapthagiri College"/>
   <busStop id="sb_07" lane="-1090992211#4_0" startPos="17.39" endPos="37.39" name="Bone Mill"/>
   <busStop id="sb_08" lane="1263454560#1_0" startPos="20.17" endPos="40.17" name="Bagalagunte Bus Station"/>

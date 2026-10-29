@@ -134,28 +134,33 @@ function runBridge(cfgPath, label, ctx, { recommendedStop, duration, onEvent, si
   });
 }
 
-// Compute walking-distance comparison (GIS/derived, NOT SUMO) for the results card.
-// Distance from the stop's source coordinate to current vs alternative snapped location.
-function walkingComparison(manifest) {
+// GIS-derived figures for the results card (NOT SUMO output).
+// Two genuinely different quantities — they must never share a row or a label:
+//   snapResidualM  how far a point sits from the SUMO lane it was snapped to. A network-fit
+//                  / data-quality measure, not a passenger walking distance.
+//   relocationM    how far the stop itself moves. Passengers who used the old site walk
+//                  this much further; it says nothing about distance to the road.
+function gisComparison(manifest) {
   const sel = manifest.selected;
   const cand = manifest.candidate;
   const out = { provenance: "derived (GIS)", unit: "m" };
+
   if (sel && typeof sel.distanceToRoadM === "number") {
-    out.currentWalkToRoadM = Math.round(sel.distanceToRoadM);
+    out.currentSnapResidualM = Math.round(sel.distanceToRoadM);
   }
-  if (cand && sel) {
-    // candidate is on the corridor; walking distance proxy = how far the relocation moves
-    // the stop along/across the network from the source demand point.
+  // The candidate is placed directly on a lane, so its residual is zero by construction.
+  if (cand && cand.laneId) {
+    out.recommendedSnapResidualM = 0;
+  }
+  if (cand && sel && cand.lat && cand.lon && sel.lat && sel.lon) {
     const R = 6371000;
     const toRad = (d) => (d * Math.PI) / 180;
-    if (cand.lat && cand.lon && sel.lat && sel.lon) {
-      const dLat = toRad(cand.lat - sel.lat);
-      const dLon = toRad(cand.lon - sel.lon);
-      const a = Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(sel.lat)) * Math.cos(toRad(cand.lat)) * Math.sin(dLon / 2) ** 2;
-      out.alternativeWalkToRoadM = Math.round(2 * R * Math.asin(Math.sqrt(a)));
-      out.relocationShiftM = cand.shiftAlongCorridorM;
-    }
+    const dLat = toRad(cand.lat - sel.lat);
+    const dLon = toRad(cand.lon - sel.lon);
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(sel.lat)) * Math.cos(toRad(cand.lat)) * Math.sin(dLon / 2) ** 2;
+    out.relocationStraightLineM = Math.round(2 * R * Math.asin(Math.sqrt(a)));
+    out.relocationAlongCorridorM = cand.shiftAlongCorridorM;
   }
   return out;
 }
@@ -210,7 +215,7 @@ export async function runComparison(stopId, { onEvent, force = false, signal } =
 
   emit({ type: "stage", stage: "Collecting metrics", detail: "aggregating SUMO tripinfo" });
 
-  const walk = walkingComparison(manifest);
+  const gis = gisComparison(manifest);
   const result = {
     stopId,
     stopName: manifest.selected ? manifest.selected.name : stopId,
@@ -221,7 +226,7 @@ export async function runComparison(stopId, { onEvent, force = false, signal } =
     seed: 42,
     networkProvenance: manifest.network ? manifest.network.provenance : "OSM-derived",
     demandProvenance: manifest.demand ? manifest.demand.provenance : "synthetic",
-    walking: walk,
+    gis,
     current: curDone ? curDone.measured : null,
     alternative: altDone ? altDone.measured : null,
     completedAt: new Date().toISOString(),

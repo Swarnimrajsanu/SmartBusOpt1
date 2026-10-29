@@ -112,21 +112,30 @@ def parse_tripinfo(path, bus_type="bus"):
     def mean(xs):
         return round(sum(xs) / len(xs), 3) if xs else None
 
-    n = agg["completed"] or 1
-    bn = agg["busCompleted"] or 1
+    completed = agg["completed"]
+    bus_completed = agg["busCompleted"]
+
+    # A run in which nothing completed has no measurement. Emit null, never 0.0 —
+    # a zero average stamped "SUMO-measured" would be a fabricated result (§11).
+    def per_vehicle(total, nd):
+        return round(total / completed, nd) if completed else None
+
+    def per_bus(total, nd):
+        return round(total / bus_completed, nd) if bus_completed else None
+
     return {
         "provenance": "SUMO-measured",
-        "vehiclesCompleted": agg["completed"],
-        "avgTravelTimeSec": round(agg["sumDuration"] / n, 2),
-        "avgDelaySec": round(agg["sumTimeLoss"] / n, 2),
-        "avgWaitingSec": round(agg["sumWaiting"] / n, 2),
+        "vehiclesCompleted": completed,
+        "avgTravelTimeSec": per_vehicle(agg["sumDuration"], 2),
+        "avgDelaySec": per_vehicle(agg["sumTimeLoss"], 2),
+        "avgWaitingSec": per_vehicle(agg["sumWaiting"], 2),
         "avgSpeedMs": mean(speeds),
-        "avgRouteLengthM": round(agg["sumRouteLen"] / n, 1),
+        "avgRouteLengthM": per_vehicle(agg["sumRouteLen"], 1),
         "bus": {
-            "completed": agg["busCompleted"],
-            "avgTravelTimeSec": round(agg["busSumDuration"] / bn, 2) if agg["busCompleted"] else None,
-            "avgDelaySec": round(agg["busSumTimeLoss"] / bn, 2) if agg["busCompleted"] else None,
-            "avgStopWaitingSec": round(agg["busSumWaiting"] / bn, 2) if agg["busCompleted"] else None,
+            "completed": bus_completed,
+            "avgTravelTimeSec": per_bus(agg["busSumDuration"], 2),
+            "avgDelaySec": per_bus(agg["busSumTimeLoss"], 2),
+            "avgStopWaitingSec": per_bus(agg["busSumWaiting"], 2),
             "avgSpeedMs": mean(bus_speeds),
         },
     }

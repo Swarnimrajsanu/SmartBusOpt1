@@ -13,15 +13,15 @@
     "lon": 77.5034483
   },
   "candidate": {
-    "edgeId": "85605697#12",
-    "laneId": "85605697#12_0",
-    "position": 44.84,
-    "edgeLength": 89.67,
-    "junctionScore": 9.0,
-    "routeIndex": 25,
-    "shiftAlongCorridorM": -89.7,
-    "lon": 77.503758,
-    "lat": 13.069429
+    "edgeId": "1123530917#2",
+    "laneId": "1123530917#2_0",
+    "position": 12.69,
+    "edgeLength": 25.37,
+    "junctionScore": 12.0,
+    "routeIndex": 28,
+    "shiftAlongCorridorM": 157.3,
+    "lon": 77.503854,
+    "lat": 13.065739
   },
   "candidateProvenance": "GIS rule-based relocation toward nearest major/signalized junction within 320m, min spacing 140m. Suitability proxy \u2014 NOT an ML verdict; validated by SUMO.",
   "simDuration": 1500,

@@ -180,6 +180,26 @@ def _lane_allows_bus(lane):
         return False
 
 
+def route_offsets(net, route):
+    """Cumulative corridor distance to the START of each route edge.
+
+    A SUMO route lists only real edges, so the junction geometry between two consecutive
+    edges is invisible to a plain edge-length sum. We add that crossing explicitly —
+    without it the corridor measures ~1km short (3907m vs the 4899m the edge shapes
+    actually span), and any position derived from it is wrong by the same kind of margin.
+    """
+    cum = [0.0]
+    for i in range(1, len(route)):
+        prev = net.getEdge(route[i - 1])
+        cur = net.getEdge(route[i])
+        try:
+            gap = gh.distance(prev.getShape()[-1], cur.getShape()[0])
+        except Exception:
+            gap = 0.0
+        cum.append(cum[-1] + prev.getLength() + gap)
+    return cum
+
+
 def find_candidate(net, route, order, sel):
     """GIS rule-based relocation candidate for the selected stop.
 
@@ -187,6 +207,10 @@ def find_candidate(net, route, order, sel):
     pick the edge+position with the highest junction score that is a different edge than
     the current one and keeps MIN_SPACING_M from the neighbouring stops. Returns a dict
     describing the candidate (or None if nothing feasible).
+
+    All distances here are measured between STOP POSITIONS, not edge boundaries: an edge
+    start is not where the stop sits, and ignoring the in-edge offset reports a whole
+    edge length as the move (198.7m for a stop that actually relocates 36m).
     """
     sel_edge = sel["edgeId"]
     if sel_edge not in route:
@@ -194,11 +218,8 @@ def find_candidate(net, route, order, sel):
         return None
     sel_idx = route.index(sel_edge)
 
-    # approximate cumulative distance along the corridor to bound the search window
-    cum = [0.0]
-    for eid in route:
-        cum.append(cum[-1] + net.getEdge(eid).getLength())
-    sel_pos_route = cum[sel_idx]
+    cum = route_offsets(net, route)
+    sel_pos_route = cum[sel_idx] + (sel["position"] or 0.0)
 
     best = None
     lo = max(0, sel_idx - 25)
@@ -207,8 +228,6 @@ def find_candidate(net, route, order, sel):
         eid = route[idx]
         if eid == sel_edge:
             continue
-        if abs(cum[idx] - sel_pos_route) > CAND_SEARCH_M:
-            continue
         edge = net.getEdge(eid)
         lanes = edge.getLanes()
         if not lanes or not edge.allows("bus"):
@@ -216,21 +235,25 @@ def find_candidate(net, route, order, sel):
         bus_lane = next((l for l in lanes if _lane_allows_bus(l)), None)
         if bus_lane is None:
             continue
-        # spacing vs neighbouring stops (in route-distance terms)
+        length = bus_lane.getLength()
+        pos = min(max(length * 0.5, 5.0), max(length - 5.0, 5.0))
+        cand_pos_route = cum[idx] + pos
+        if abs(cand_pos_route - sel_pos_route) > CAND_SEARCH_M:
+            continue
+        # spacing vs neighbouring stops, stop position to stop position
         too_close = False
         for o in order:
             if o["stopId"] == sel["stopId"] or o["edgeId"] is None:
                 continue
             if o["edgeId"] in route:
                 o_idx = route.index(o["edgeId"])
-                if abs(cum[o_idx] - cum[idx]) < MIN_SPACING_M:
+                o_pos_route = cum[o_idx] + (o["position"] or 0.0)
+                if abs(o_pos_route - cand_pos_route) < MIN_SPACING_M:
                     too_close = True
                     break
         if too_close:
             continue
         sc = junction_score(net, edge)
-        length = bus_lane.getLength()
-        pos = min(max(length * 0.5, 5.0), max(length - 5.0, 5.0))
         cand = {
             "edgeId": eid,
             "laneId": bus_lane.getID(),
@@ -238,7 +261,7 @@ def find_candidate(net, route, order, sel):
             "edgeLength": round(length, 2),
             "junctionScore": round(sc, 2),
             "routeIndex": idx,
-            "shiftAlongCorridorM": round(cum[idx] - sel_pos_route, 1),
+            "shiftAlongCorridorM": round(cand_pos_route - sel_pos_route, 1),
         }
         if best is None or sc > best["junctionScore"]:
             best = cand
